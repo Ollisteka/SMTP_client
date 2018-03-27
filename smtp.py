@@ -30,15 +30,17 @@ class SMTP:
         else:
             self.address = (address, port)
         self.control_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
+        self.receivers = []
+        self.sender = ""
+        self.subject = ""
 
         self.commands = {"HELO": self.hello,
                          "EHLO": self.ehllo,
                          "AUTH": self.auth,
-                         "DATA_C": self.data_console,
+                         "DATA": self.data_console,
                          "QUIT": self.quit,
-                         "MAIL_FROM": self.mail_from,
-                         "RCPT_TO": self.rcpt_to,
+                         "FROM": self.mail_from,
+                         "TO": self.rcpt_to,
                          }
 
     def hello(self):
@@ -54,11 +56,14 @@ class SMTP:
         return rep
 
     def mail_from(self, address):
-        rep = self.send("MAIL FROM: <" + address + '>' + CRLF)
+        self.sender = '<' + address + '>'
+        rep = self.send("MAIL FROM: " + self.sender + CRLF)
         return rep
 
     def rcpt_to(self, address):
-        rep = self.send("RCPT TO: <" + address + '>' + CRLF)
+        address = '<' + address + '>'
+        self.receivers.append(address)
+        rep = self.send("RCPT TO: " + address + CRLF)
         return rep
 
     def data_console(self):
@@ -66,8 +71,13 @@ class SMTP:
         print(rep)
         line = input()
         first_iter = True
+        content = "Content-Type: text/plain" + CRLF
         data = []
+        data.extend([self.get_sender(), self. get_recievers(), self.get_subject(), content])
         while line != '.' or first_iter:
+            first_char = line[0]
+            if first_char == '.':
+                line = '.' + line
             data.append(line)
             first_iter = False
             line = input()
@@ -76,6 +86,20 @@ class SMTP:
         rep = self.send(msg + CRLF)
         return rep
 
+    def get_sender(self):
+        return "From: " + self.sender
+
+    def set_subject(self, topic=""):
+        self.subject = topic
+
+    def get_recievers(self):
+        header = "To: "
+        for receiver in self.receivers:
+            header += receiver + ', '
+        return header[:-2]
+
+    def get_subject(self):
+        return "Subject: " + self.subject
 
     def quit(self):
         """
@@ -88,12 +112,22 @@ class SMTP:
         self.control_socket.close()
         return rep
 
-    def auth(self, username, password):
+    def auth(self, username="zhukova.o.m@yandex.ru", password="HateHim98o"):
         base64_str = ("\x00" + username + "\x00" + password).encode()
         base64_str = base64.b64encode(base64_str)
         auth_msg = "AUTH PLAIN ".encode() + base64_str + CRLF.encode()
         rep = self.send(auth_msg, False)
         return rep
+
+    def send_message(self, msg):
+        """
+
+        :type msg: Message
+        :return:
+        """
+        self.mail_from(msg.sender)
+        for address in msg.receivers:
+            self.rcpt_to(address)
 
     def send(self, command, text=True):
         """

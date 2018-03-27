@@ -18,16 +18,20 @@ def main():
                         nargs='?', default=SMTP_SERVER)
     parser.add_argument('port', help='port', nargs='?',
                         type=int, default=SMTP_PORT)
-    parser.add_argument('-e', '--encoding', type=str, help="Choose server's "
-                                                           "encoding")
+    parser.add_argument('-c', '--console', action="store_true", help="Enable console mode")
 
     args = parser.parse_args()
-    if args.encoding:
-        smtp.ENCODING = args.encoding
     con = SMTP(args.address, args.port)
     print(con.connect())
-    con.run_batch()
+    if args.console:
+        con.run_batch()
+    else:
+        send_mail()
 
+
+def send_mail():
+    with open("input.txt") as f:
+        pass
 
 if __name__ == '__main__':
     sys.exit(main())
