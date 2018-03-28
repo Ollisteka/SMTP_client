@@ -1,10 +1,9 @@
 # !/usr/bin/env python3
-import getpass
-import os
-import ssl
 import base64
 import re
 import socket
+import ssl
+
 from errors import TransientError, ProtectedError, PermanentError
 
 SMTP_PORT = 465
@@ -12,7 +11,7 @@ SMTP_SERVER = 'smtp.yandex.ru'#'smtp-relay.gmail.com'
 
 FROM_MAIL = "gekkelolga@gmail.com"
 
-ENCODING = 'utf8'
+ENCODING = 'utf-8'
 MAXLENGTH = 8192
 
 
@@ -66,9 +65,12 @@ class SMTP:
         rep = self.send("RCPT TO: " + address + CRLF)
         return rep
 
-    def data_console(self):
+    def data(self):
         rep = self.send('DATA' + CRLF)
-        print(rep)
+        return rep
+
+    def data_console(self):
+        print(self.data())
         line = input()
         first_iter = True
         content = "Content-Type: text/plain" + CRLF

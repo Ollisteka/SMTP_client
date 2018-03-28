@@ -1,0 +1,13 @@
+{
+  "From": "zhukova.o.m@yandex.ru",
+  "To": [
+    "zhukova.o.m@yandex.ru",
+    "starcevmisha@gmail.com"
+  ],
+  "Text": "message.txt",
+  "Subject": "Приветик",
+  "Attachments": [
+    "smile.png",
+    "input.json"
+  ]
+}
