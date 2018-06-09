@@ -61,6 +61,11 @@ class Message:
             first_char = line[0]
             if first_char == '.':
                 line = '.' + line
+                if len(line) > 1000:
+                    i = 0
+                    while i < len(line):
+                        data.append(line[i:i+1000])
+                    continue
             data.append(line)
         return CRLF.join(data) + CRLF
 
