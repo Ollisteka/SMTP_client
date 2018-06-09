@@ -9,7 +9,7 @@ import smtp
 from message import Message
 from smtp import SMTP, SMTP_PORT, SMTP_SERVER
 
-SENDER = "From"
+FROM = "From"
 RECEIVERS = "To"
 TEXT = "Text"
 SUBJECT = "Subject"
@@ -30,7 +30,7 @@ def main():
     group.add_argument('-c', '--console', action="store_true", help="Enable console mode")
     group.add_argument('-s', '--settings', metavar="FILE", type=str, default="input.json",
                        help="JSON file with settings. MUST have following keys:\n"
-                            f"{', '.join([SENDER, RECEIVERS, SUBJECT, TEXT, ATTACHMENTS])}")
+                            f"{', '.join([FROM, RECEIVERS, SUBJECT, TEXT, ATTACHMENTS])}")
 
     args = parser.parse_args()
     smtp_con = SMTP(args.address, args.port)
@@ -50,7 +50,7 @@ def send_mail(smtp_con, settings_file):
     """
     with open(settings_file, 'r', encoding=smtp.ENCODING) as f:
         config = json.loads(f.read())
-    sender = config[SENDER]
+    sender = config[FROM]
     receivers = config[RECEIVERS]
     subject = config[SUBJECT]
     attachments = config[ATTACHMENTS]

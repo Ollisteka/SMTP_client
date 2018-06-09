@@ -15,7 +15,7 @@ ATTACHMENT_TEMPLATE = '\r\nContent-Type: application/octet-stream;\r\n' \
 class Message:
     def __init__(self, from_, to, topic, text_lines, attachments):
         self.subject = "Subject: " + topic
-        self.sender = "From: <" + from_ + ">"
+        self.from_ = "From: <" + from_ + ">"
         self.receivers = to[:]
         self.attachments = attachments
         self.email = None
@@ -43,7 +43,7 @@ class Message:
     def fill_header(self):
         return UPPER_HEADER \
                + MIME_VERSION \
-               + CRLF.join([self.sender, self.get_receivers(), self.subject]) \
+               + CRLF.join([self.from_, self.get_receivers(), self.subject]) \
                + CRLF
 
     def append_attachment(self, filename):

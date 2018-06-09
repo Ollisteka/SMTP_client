@@ -29,7 +29,7 @@ class SMTP:
             self.address = (address, port)
         self.control_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.receivers = []
-        self.sender = ""
+        self.from_ = ""
         self.subject = ""
 
         self.commands = {"HELO": self.hello,
@@ -79,8 +79,8 @@ class SMTP:
         :param address:
         :return:
         """
-        self.sender = '<' + address + '>'
-        rep = self.send(f"MAIL FROM: {self.sender}" + CRLF)
+        self.from_ = '<' + address + '>'
+        rep = self.send(f"MAIL FROM: {self.from_}" + CRLF)
         return rep
 
     def rcpt_to(self, address):
@@ -122,7 +122,7 @@ class SMTP:
             data.append(line)
             first_iter = False
             line = input()
-        message = Message(self.sender, self.receivers, self.subject, data, [])
+        message = Message(self.from_, self.receivers, self.subject, data, [])
         rep = self.send(message.get_email())
         return rep
 
