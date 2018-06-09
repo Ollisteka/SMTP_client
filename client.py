@@ -15,17 +15,22 @@ TEXT = "Text"
 SUBJECT = "Subject"
 ATTACHMENTS = "Attachments"
 
+
 def main():
     parser = argparse.ArgumentParser(
-        usage='{} [OPTIONS]'.format(
-            os.path.basename(
-                sys.argv[0])),
-        description='SMTP client')
+        usage='{} [OPTIONS]'.format(os.path.basename(sys.argv[0])),
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description='SMTP client, with cool CUI. To')
     parser.add_argument('address', help='address to connect',
                         nargs='?', default=SMTP_SERVER)
     parser.add_argument('port', help='port', nargs='?',
                         type=int, default=SMTP_PORT)
-    parser.add_argument('-c', '--console', action="store_true", help="Enable console mode")
+    group = parser.add_mutually_exclusive_group()
+
+    group.add_argument('-c', '--console', action="store_true", help="Enable console mode")
+    group.add_argument('-s', '--settings', metavar="FILE", type=str, default="input.json",
+                       help="JSON file with settings. MUST have following keys:\n"
+                            f"{', '.join([SENDER, RECEIVERS, SUBJECT, TEXT, ATTACHMENTS])}")
 
     args = parser.parse_args()
     smtp_con = SMTP(args.address, args.port)
@@ -33,30 +38,31 @@ def main():
     if args.console:
         smtp_con.run_batch()
     else:
-        send_mail(smtp_con)
+        send_mail(smtp_con, args.settings)
 
 
-def send_mail(smtp_con):
+def send_mail(smtp_con, settings_file):
     """
 
+    :param settings_file:
     :type smtp_con: SMTP
     :return:
     """
-    with open("input.json", 'r', encoding=smtp.ENCODING) as f:
+    with open(settings_file, 'r', encoding=smtp.ENCODING) as f:
         config = json.loads(f.read())
     sender = config[SENDER]
-    recievers = config[RECEIVERS]
+    receivers = config[RECEIVERS]
     subject = config[SUBJECT]
     attachments = config[ATTACHMENTS]
-    with open(config[TEXT], 'r', encoding='utf8') as f:
+    with open(config[TEXT], 'r', encoding=smtp.ENCODING) as f:
         text_lines = f.readlines()
-    message = Message(sender, recievers, subject, text_lines, attachments)
+    message = Message(sender, receivers, subject, text_lines, attachments)
     email = message.get_email()
     print(smtp_con.ehllo())
     print(smtp_con.auth())
     print(smtp_con.mail_from(sender))
-    for reciever in recievers:
-        print(smtp_con.rcpt_to(reciever))
+    for receiver in receivers:
+        print(smtp_con.rcpt_to(receiver))
     print(smtp_con.data())
     print(smtp_con.send(email))
     print(smtp_con.quit())
