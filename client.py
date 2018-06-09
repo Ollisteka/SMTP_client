@@ -48,7 +48,7 @@ def send_mail(smtp_con):
     recievers = config[RECEIVERS]
     subject = config[SUBJECT]
     attachments = config[ATTACHMENTS]
-    with open(config[TEXT], 'r') as f:
+    with open(config[TEXT], 'r', encoding='utf8') as f:
         text_lines = f.readlines()
     message = Message(sender, recievers, subject, text_lines, attachments)
     email = message.get_email()
