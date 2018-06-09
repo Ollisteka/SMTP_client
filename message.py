@@ -1,6 +1,6 @@
 import base64
 
-from smtp import CRLF
+CRLF = "\r\n"
 
 BOUNDARY = "--===============012345678=="
 UPPER_HEADER = 'Content-Type: multipart/mixed; boundary="{}"\r\n'.format(BOUNDARY[2:])
@@ -10,6 +10,7 @@ ATTACHMENT_TEMPLATE = '\r\nContent-Type: application/octet-stream;\r\n' \
                       'Name="{0}"\r\n' \
                       'Content-Transfer-Encoding: base64 \r\n' \
                       'Content-Disposition: attachment; filename="{0}"\r\n\r\n'
+
 
 class Message:
     def __init__(self, from_, to, topic, text_lines, attachments):
@@ -42,7 +43,7 @@ class Message:
     def fill_header(self):
         return UPPER_HEADER \
                + MIME_VERSION \
-               + CRLF.join([self.sender, self.get_recievers(), self.subject]) \
+               + CRLF.join([self.sender, self.get_receivers(), self.subject]) \
                + CRLF
 
     def append_attachment(self, filename):
@@ -58,6 +59,9 @@ class Message:
     def parse_message(self, msg_lines):
         data = []
         for line in msg_lines:
+            if len(line) == 0:
+                data.append("")
+                continue
             first_char = line[0]
             if first_char == '.':
                 line = '.' + line
@@ -69,7 +73,7 @@ class Message:
             data.append(line)
         return CRLF.join(data) + CRLF
 
-    def get_recievers(self):
+    def get_receivers(self):
         header = "To: <"
         for receiver in self.receivers:
             header += receiver + '>, <'
