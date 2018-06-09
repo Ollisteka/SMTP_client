@@ -114,7 +114,7 @@ class SMTP:
         self.control_socket.close()
         return rep
 
-    def auth(self, username="zhukova.o.m@yandex.ru", password="HateHim98o"):
+    def auth(self, username="inet.task@yandex.ru", password="inet.task."):
         base64_str = ("\x00" + username + "\x00" + password).encode()
         base64_str = base64.b64encode(base64_str)
         auth_msg = "AUTH PLAIN ".encode() + base64_str + CRLF.encode()
