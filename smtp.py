@@ -51,10 +51,18 @@ class SMTP:
         rep = self.send("HELO BOB" + CRLF)
         return rep
 
-    def help(self):
-        header = "List of available commands:\n"
-        body = ", ".join(cmd for cmd in self.commands.keys())
-        return header + body
+    def help(self, command=None):
+        """
+        Prints list of available commands, if called without arguments.
+        Prints command's docstring otherwise.
+        :param command:
+        :return:
+        """
+        if not command:
+            header = "List of available commands:\n"
+            body = ", ".join(cmd for cmd in self.commands.keys())
+            return header + body
+        return self.commands[command.upper()].__doc__.replace(":return:", "")
 
     def ehllo(self):
         """
