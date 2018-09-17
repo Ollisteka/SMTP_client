@@ -40,6 +40,7 @@ class SMTP:
                          "QUIT": self.quit,
                          "FROM": self.mail_from,
                          "TO": self.rcpt_to,
+                         "HELP": self.help,
                          }
 
     def hello(self):
@@ -47,8 +48,9 @@ class SMTP:
         return rep
 
     def help(self):
-        rep = self.send("HELP" + CRLF)
-        return rep
+        header = "List of available commands:\n"
+        body = ", ".join(cmd for cmd in self.commands.keys())
+        return header + body
 
     def ehllo(self):
         rep = self.send("EHLO ALICE" + CRLF)
