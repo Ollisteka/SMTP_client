@@ -5,11 +5,10 @@ import socket
 import ssl
 
 from errors import TransientError, ProtectedError, PermanentError
+from message import Message
 
 SMTP_PORT = 465
-SMTP_SERVER = 'smtp.yandex.ru'#'smtp-relay.gmail.com'
-
-FROM_MAIL = "gekkelolga@gmail.com"
+SMTP_SERVER = 'smtp.yandex.ru'
 
 ENCODING = 'utf-8'
 MAXLENGTH = 8192
@@ -30,7 +29,7 @@ class SMTP:
             self.address = (address, port)
         self.control_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.receivers = []
-        self.sender = ""
+        self.from_ = ""
         self.subject = ""
 
         self.commands = {"HELO": self.hello,
@@ -44,6 +43,11 @@ class SMTP:
                          }
 
     def hello(self):
+        """
+        These commands are used to identify the SMTP client to the SMTP
+        server.
+        :return:
+        """
         rep = self.send("HELO BOB" + CRLF)
         return rep
 
@@ -53,57 +57,80 @@ class SMTP:
         return header + body
 
     def ehllo(self):
+        """
+        Same as HELO, but also gets a list of the supported SMTP service extensions
+        :return:
+        """
         rep = self.send("EHLO ALICE" + CRLF)
         return rep
 
+    def auth(self, username="inet.task@yandex.ru", password="inet.task."):
+        """
+        Sign in, using username and password, encoded in base64 (PLAIN)
+        :param username:
+        :param password:
+        :return:
+        """
+        base64_str = ("\x00" + username + "\x00" + password).encode()
+        base64_str = base64.b64encode(base64_str)
+        auth_msg = "AUTH PLAIN ".encode() + base64_str + CRLF.encode()
+        rep = self.send(auth_msg, False)
+        return rep
+
     def mail_from(self, address):
-        self.sender = '<' + address + '>'
-        rep = self.send("MAIL FROM: " + self.sender + CRLF)
+        """
+        This command tells the SMTP-receiver that a new mail transaction is
+        starting and to reset all its state tables and buffers, including any
+        recipients or mail data.
+        :param address:
+        :return:
+        """
+        self.from_ = '<' + address + '>'
+        rep = self.send(f"MAIL FROM: {self.from_}" + CRLF)
         return rep
 
     def rcpt_to(self, address):
+        """
+        This command is used to identify an individual recipient of the mail data;
+        multiple recipients are specified by multiple uses of this command.
+        :param address:
+        :return:
+        """
         address = '<' + address + '>'
         self.receivers.append(address)
-        rep = self.send("RCPT TO: " + address + CRLF)
+        rep = self.send(f"RCPT TO: {address}" + CRLF)
         return rep
 
     def data(self):
+        """
+        The receiver treats the lines following the command as mail
+        data from the sender.  This command causes the mail data
+        from this command to be appended to the mail data buffer.
+
+        The mail data is terminated by a line containing only a
+        period, that is the character sequence "<CRLF>.<CRLF>"
+        This is the end of mail data indication.
+        :return:
+        """
         rep = self.send('DATA' + CRLF)
         return rep
 
     def data_console(self):
+        """
+        Forms message from the stdin text.
+        :return:
+        """
         print(self.data())
         line = input()
         first_iter = True
-        content = "Content-Type: text/plain" + CRLF
         data = []
-        data.extend([self.get_sender(), self. get_recievers(), self.get_subject(), content])
         while line != '.' or first_iter:
-            first_char = line[0]
-            if first_char == '.':
-                line = '.' + line
             data.append(line)
             first_iter = False
             line = input()
-        data.append('.')
-        msg = CRLF.join(data)
-        rep = self.send(msg + CRLF)
+        message = Message(self.from_, self.receivers, self.subject, data, [])
+        rep = self.send(message.get_email())
         return rep
-
-    def get_sender(self):
-        return "From: " + self.sender
-
-    def set_subject(self, topic=""):
-        self.subject = topic
-
-    def get_recievers(self):
-        header = "To: "
-        for receiver in self.receivers:
-            header += receiver + ', '
-        return header[:-2]
-
-    def get_subject(self):
-        return "Subject: " + self.subject
 
     def quit(self):
         """
@@ -115,23 +142,6 @@ class SMTP:
         self.control_socket.shutdown(socket.SHUT_RDWR)
         self.control_socket.close()
         return rep
-
-    def auth(self, username="inet.task@yandex.ru", password="inet.task."):
-        base64_str = ("\x00" + username + "\x00" + password).encode()
-        base64_str = base64.b64encode(base64_str)
-        auth_msg = "AUTH PLAIN ".encode() + base64_str + CRLF.encode()
-        rep = self.send(auth_msg, False)
-        return rep
-
-    def send_message(self, msg):
-        """
-
-        :type msg: Message
-        :return:
-        """
-        self.mail_from(msg.sender)
-        for address in msg.receivers:
-            self.rcpt_to(address)
 
     def send(self, command, text=True):
         """
@@ -197,7 +207,7 @@ class SMTP:
 
     def run_batch(self):
         """
-        Runs an ftp client in console mode
+        Runs an SMTP client in console mode
         :return:
         """
         while not self.closed:
